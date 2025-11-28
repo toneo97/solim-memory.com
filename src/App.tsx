@@ -32,9 +32,53 @@ const App: React.FC = () => {
   // Store wizard data if user completes flow, so we can submit after payment
   const [completedWizardData, setCompletedWizardData] = useState<any>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [session, setSession] = useState<any>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
   
   // Using the same logo link from Navbar for consistency
   const logoUrl = "https://www.dropbox.com/scl/fi/yruygvw5vv4p8c1ppk2os/Solim-brain-logo-1.png?rlkey=wfs4c7hjrhisjetsf0nq8gnig&st=uppd1ooo&raw=1";
+
+  // Check active session and handle auth redirects
+  useEffect(() => {
+    // Initial session check
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        setSession(session);
+        handleAuthRedirects(session, view);
+      } catch (err) {
+        console.error("Error checking session:", err);
+      } finally {
+        setLoadingSession(false);
+      }
+    };
+
+    checkSession();
+
+    // Listen for changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      // We don't automatically redirect on state change here to avoid jarring UX, 
+      // but we update the session state which triggers re-renders if needed.
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Logic to protect routes
+  const handleAuthRedirects = (currentSession: any, currentView: ViewState) => {
+    // If on dashboard but not logged in, go to login
+    if (currentView === 'dashboard' && !currentSession) {
+      window.location.href = '/login';
+    }
+    // If on login/signup but already logged in, go to dashboard
+    if ((currentView === 'login' || currentView === 'signup') && currentSession) {
+      window.location.href = '/dashboard';
+    }
+  };
 
   // Reset scroll position when view changes
   useEffect(() => {
@@ -65,7 +109,31 @@ const App: React.FC = () => {
     }
   };
 
+  if (loadingSession) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+           <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+           <p className="text-slate-500 text-sm font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (view === 'dashboard') {
+    // Double check session existence for dashboard render, though redirect should happen
+    if (!session) {
+        // Fallback if redirect hasn't happened yet
+        return (
+          <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+             <div className="text-center">
+               <p className="mb-4">Please log in to view the dashboard.</p>
+               <button onClick={() => window.location.href = '/login'} className="text-blue-600 hover:underline">Go to Login</button>
+             </div>
+          </div>
+        );
+    }
+
     return (
       <Dashboard 
         onLogout={handleLogout} 
