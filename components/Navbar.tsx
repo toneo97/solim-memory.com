@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Brain } from 'lucide-react';
+import { Menu, X, Brain, ExternalLink } from 'lucide-react';
 
 const logoAssets = {
   dark: "https://www.dropbox.com/scl/fi/yruygvw5vv4p8c1ppk2os/Solim-brain-logo-1.png?rlkey=wfs4c7hjrhisjetsf0nq8gnig&st=uppd1ooo&raw=1"    
@@ -46,15 +46,15 @@ const Navbar: React.FC<NavbarProps> = ({ onGetStarted, onPricingClick, onLoginCl
 
   return (
     <nav
-      className="fixed w-full z-50 transition-all duration-300 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm h-24 flex items-center"
+      className="fixed w-full z-50 transition-all duration-300 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm h-16 md:h-24 flex items-center"
     >
       <div className="max-w-7xl mx-auto px-6 w-full flex justify-between items-center h-full relative">
         
         {/* Logo - Scrolls to top */}
         <div className="relative h-full flex items-center group cursor-pointer" onClick={handleLogoClick}>
-          <div className="w-56 md:w-80 h-full flex-shrink-0"></div>
+          <div className="w-40 md:w-80 h-full flex-shrink-0"></div>
 
-          <div className="absolute top-1/2 left-0 flex items-center h-32 -translate-y-1/2">
+          <div className="absolute top-1/2 left-0 flex items-center h-20 md:h-32 -translate-y-1/2">
             {!logoError ? (
               <img 
                 src={currentLogoSrc} 
@@ -64,11 +64,11 @@ const Navbar: React.FC<NavbarProps> = ({ onGetStarted, onPricingClick, onLoginCl
               />
             ) : (
               <div className={`flex items-center gap-1 ${textColorClass} mt-4`}>
-                <span className="text-6xl font-sans font-medium tracking-tight">s</span>
-                <div className="relative flex items-center justify-center w-20 h-20 mx-0.5">
+                <span className="text-4xl md:text-6xl font-sans font-medium tracking-tight">s</span>
+                <div className="relative flex items-center justify-center w-12 h-12 md:w-20 md:h-20 mx-0.5">
                    <Brain className="w-full h-full" strokeWidth={2} />
                 </div>
-                <span className="text-6xl font-sans font-medium tracking-tight">lim</span>
+                <span className="text-4xl md:text-6xl font-sans font-medium tracking-tight">lim</span>
               </div>
             )}
           </div>
@@ -76,6 +76,16 @@ const Navbar: React.FC<NavbarProps> = ({ onGetStarted, onPricingClick, onLoginCl
 
         <div className="hidden md:flex items-center gap-8">
           <button onClick={() => handleNavClick('how-it-works')} className={`text-sm font-medium transition-colors ${textColorClass} hover:opacity-70`}>How it works</button>
+          
+          <a 
+            href="https://www.solimhealth.com" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={`text-sm font-medium transition-colors ${textColorClass} hover:opacity-70 flex items-center gap-1`}
+          >
+            Memory Therapy <ExternalLink className="w-3 h-3 opacity-50" />
+          </a>
+
           <button onClick={onPricingClick} className={`text-sm font-medium transition-colors ${textColorClass} hover:opacity-70`}>Pricing</button>
           <button onClick={() => handleNavClick('testimonials')} className={`text-sm font-medium transition-colors ${textColorClass} hover:opacity-70`}>Testimonials</button>
           
@@ -105,9 +115,17 @@ const Navbar: React.FC<NavbarProps> = ({ onGetStarted, onPricingClick, onLoginCl
       </div>
 
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 p-6 flex flex-col gap-6 shadow-xl animate-in slide-in-from-top-5">
-          <div className="h-6"></div> 
+        <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-slate-100 p-6 flex flex-col gap-6 shadow-xl animate-in slide-in-from-top-5">
+          <div className="h-2"></div> 
           <button onClick={() => handleNavClick('how-it-works')} className="text-lg text-slate-800 font-medium text-left">How it works</button>
+          <a 
+            href="https://www.solimhealth.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-lg text-slate-800 font-medium text-left flex items-center gap-2"
+          >
+            Memory Therapy <ExternalLink className="w-4 h-4 opacity-50" />
+          </a>
           <button 
             onClick={() => {
               setIsMobileMenuOpen(false);

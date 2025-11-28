@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import RealMoments from './components/RealMoments';
 import HowItWorks from './components/HowItWorks';
 import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
@@ -10,9 +9,15 @@ import IntakeWizard from './components/IntakeWizard';
 import PaymentPage from './components/PaymentPage';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
+import Dashboard from './components/Dashboard';
+import FAQ from './components/FAQ';
+import LegalPage from './components/LegalPages';
+import Mission from './components/Mission';
+
+type ViewState = 'landing' | 'wizard' | 'payment' | 'login' | 'signup' | 'dashboard' | 'terms' | 'privacy';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'landing' | 'wizard' | 'payment' | 'login' | 'signup'>('landing');
+  const [view, setView] = useState<ViewState>('landing');
   // Store wizard data if user completes flow, so we can submit after payment
   const [completedWizardData, setCompletedWizardData] = useState<any>(null);
   const [userEmail, setUserEmail] = useState('');
@@ -53,6 +58,28 @@ const App: React.FC = () => {
     }
   };
 
+  if (view === 'dashboard') {
+    return (
+      <Dashboard 
+        onLogout={() => setView('landing')} 
+        onNewMemory={() => setView('wizard')}
+        onHome={() => setView('landing')}
+      />
+    );
+  }
+
+  if (view === 'terms') {
+    return (
+      <LegalPage type="terms" onBack={() => setView('landing')} />
+    );
+  }
+
+  if (view === 'privacy') {
+    return (
+      <LegalPage type="privacy" onBack={() => setView('landing')} />
+    );
+  }
+
   if (view === 'wizard') {
     return (
       <IntakeWizard 
@@ -72,6 +99,7 @@ const App: React.FC = () => {
       <LoginPage 
         onReturnHome={() => handleNavigation('top')} 
         onSignUp={() => setView('signup')} 
+        onLoginSuccess={() => setView('dashboard')}
       />
     );
   }
@@ -94,6 +122,13 @@ const App: React.FC = () => {
     onNavigate: handleNavigation
   };
 
+  const footerProps = {
+    onPricingClick: () => setView('payment'),
+    onNavigate: handleNavigation,
+    onTermsClick: () => setView('terms'),
+    onPrivacyClick: () => setView('privacy')
+  };
+
   if (view === 'payment') {
     return (
       <>
@@ -104,7 +139,7 @@ const App: React.FC = () => {
           wizardData={completedWizardData}
           onStartWizard={() => setView('wizard')}
         />
-        <Footer onPricingClick={() => setView('payment')} onNavigate={handleNavigation} />
+        <Footer {...footerProps} />
       </>
     );
   }
@@ -114,12 +149,14 @@ const App: React.FC = () => {
       <Navbar {...navbarProps} />
       <main className="flex-grow">
         <Hero onGetStarted={(email) => { setUserEmail(email); setView('wizard'); }} />
-        <RealMoments />
+        {/* RealMoments removed as per cleanup requirements */}
         <HowItWorks />
         <Testimonials />
+        <Mission />
+        <FAQ />
         <Contact />
       </main>
-      <Footer onPricingClick={() => setView('payment')} onNavigate={handleNavigation} />
+      <Footer {...footerProps} />
     </div>
   );
 };

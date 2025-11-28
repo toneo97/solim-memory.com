@@ -4,9 +4,11 @@ import { Instagram, Twitter, Facebook, Brain } from 'lucide-react';
 interface FooterProps {
   onPricingClick?: () => void;
   onNavigate?: (sectionId: string) => void;
+  onTermsClick?: () => void;
+  onPrivacyClick?: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onPricingClick, onNavigate }) => {
+const Footer: React.FC<FooterProps> = ({ onPricingClick, onNavigate, onTermsClick, onPrivacyClick }) => {
   const [logoError, setLogoError] = useState(false);
   const logoSrc = "https://www.dropbox.com/scl/fi/yruygvw5vv4p8c1ppk2os/Solim-brain-logo-1.png?rlkey=wfs4c7hjrhisjetsf0nq8gnig&st=uppd1ooo&raw=1";
 
@@ -79,18 +81,16 @@ const Footer: React.FC<FooterProps> = ({ onPricingClick, onNavigate }) => {
                   Pricing
                 </button>
               </li>
-              <li><button onClick={() => handleNavClick('examples')} className="text-slate-500 hover:text-slate-900 transition-colors">Examples</button></li>
-              <li><a href="#" className="text-slate-500 hover:text-slate-900 transition-colors">Gift Cards</a></li>
+              <li><button onClick={() => handleNavClick('testimonials')} className="text-slate-500 hover:text-slate-900 transition-colors">Testimonials</button></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-slate-900 font-semibold mb-6">Company</h4>
             <ul className="space-y-4">
-              <li><a href="#" className="text-slate-500 hover:text-slate-900 transition-colors">About Us</a></li>
-              <li><a href="#" className="text-slate-500 hover:text-slate-900 transition-colors">Careers</a></li>
-              <li><a href="#" className="text-slate-500 hover:text-slate-900 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-slate-500 hover:text-slate-900 transition-colors">Terms of Service</a></li>
+              <li><button onClick={() => handleNavClick('contact')} className="text-slate-500 hover:text-slate-900 transition-colors text-left">Contact Us</button></li>
+              <li><button onClick={onPrivacyClick} className="text-slate-500 hover:text-slate-900 transition-colors text-left">Privacy Policy</button></li>
+              <li><button onClick={onTermsClick} className="text-slate-500 hover:text-slate-900 transition-colors text-left">Terms of Service</button></li>
             </ul>
           </div>
 

@@ -4,11 +4,12 @@ import { ArrowLeft, Eye, EyeOff, Lock, Mail, Shield } from 'lucide-react';
 interface LoginPageProps {
   onReturnHome: () => void;
   onSignUp?: () => void;
+  onLoginSuccess?: () => void;
 }
 
 const logoSrc = "https://www.dropbox.com/scl/fi/yruygvw5vv4p8c1ppk2os/Solim-brain-logo-1.png?rlkey=wfs4c7hjrhisjetsf0nq8gnig&st=uppd1ooo&raw=1";
 
-const LoginPage: React.FC<LoginPageProps> = ({ onReturnHome, onSignUp }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onReturnHome, onSignUp, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,8 +21,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onReturnHome, onSignUp }) => {
     // Mock login delay
     setTimeout(() => {
       setIsLoading(false);
-      alert('Login functionality coming soon!');
-    }, 1500);
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
+    }, 1000);
   };
 
   return (

@@ -46,7 +46,12 @@
       }
       /* Ensure anchor links scroll to correct position below fixed header */
       html {
-        scroll-padding-top: 6rem; /* Matches the h-24 (96px) navbar height */
+        scroll-padding-top: 4rem; /* Matches the h-16 (64px) mobile navbar height */
+      }
+      @media (min-width: 768px) {
+        html {
+          scroll-padding-top: 6rem; /* Matches the h-24 (96px) desktop navbar height */
+        }
       }
     </style>
   <script type="importmap">
