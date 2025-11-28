@@ -59,6 +59,13 @@ const App: React.FC = () => {
     }
   }, [currentHash, currentPath]);
 
+  // Redirect base /memory-reliv to step 1 safely
+  useEffect(() => {
+    if (currentPath === '/memory-reliv') {
+      navigate('/memory-reliv-1');
+    }
+  }, [currentPath]);
+
   // --- App Data State ---
   // Lifted state for the wizard so data persists across URL step changes
   const [wizardData, setWizardData] = useState<WizardFormData>(initialFormData);
@@ -125,12 +132,6 @@ const App: React.FC = () => {
   
   // Check for the specific success path: /memory-reliv/success
   const isWizardSuccess = currentPath === '/memory-reliv/success';
-
-  // Redirect base /memory-reliv to step 1
-  if (currentPath === '/memory-reliv') {
-     window.history.replaceState(null, '', '/memory-reliv-1');
-     setCurrentPath('/memory-reliv-1');
-  }
 
   const handleNavigation = (sectionId: string) => {
     if (rootPath !== 'landing') {
