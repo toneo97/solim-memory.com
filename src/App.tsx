@@ -5,7 +5,7 @@ import HowItWorks from './components/HowItWorks';
 import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import IntakeWizard from './components/IntakeWizard';
+import IntakeWizard, { initialFormData, WizardFormData } from './components/IntakeWizard';
 import PaymentPage from './components/PaymentPage';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
@@ -32,28 +32,23 @@ const App: React.FC = () => {
 
   // Custom navigation function to update URL without reload
   const navigate = (path: string) => {
-    // If it's a hash link on the same page, just update hash
     if (path.startsWith('#')) {
       window.history.pushState(null, '', path);
       setCurrentHash(path);
       return;
     }
     
-    // Standard navigation
     window.history.pushState(null, '', path);
     setCurrentPath(window.location.pathname);
     setCurrentHash(window.location.hash);
     
-    // Scroll to top if not a hash link
     if (!path.includes('#')) {
       window.scrollTo(0, 0);
     }
   };
 
-  // Handle Hash Scrolling
   useEffect(() => {
     if (currentHash) {
-      // Small timeout to allow DOM to render
       setTimeout(() => {
         const id = currentHash.replace('#', '');
         const element = document.getElementById(id);
@@ -62,10 +57,11 @@ const App: React.FC = () => {
         }
       }, 100);
     }
-  }, [currentHash, currentPath]); // Trigger when hash changes or page loads
+  }, [currentHash, currentPath]);
 
   // --- App Data State ---
-  const [completedWizardData, setCompletedWizardData] = useState<any>(null);
+  // Lifted state for the wizard so data persists across URL step changes
+  const [wizardData, setWizardData] = useState<WizardFormData>(initialFormData);
   const [userEmail, setUserEmail] = useState('');
   const [session, setSession] = useState<any>(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -78,6 +74,12 @@ const App: React.FC = () => {
         if (error) throw error;
         setSession(session);
         handleAuthRedirects(session, window.location.pathname);
+        
+        // Pre-fill email in wizard if logged in
+        if (session?.user?.email) {
+          setWizardData(prev => ({ ...prev, userEmail: session.user.email || '' }));
+          setUserEmail(session.user.email);
+        }
       } catch (err) {
         console.error("Error checking session:", err);
       } finally {
@@ -89,6 +91,9 @@ const App: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user?.email) {
+        setWizardData(prev => ({ ...prev, userEmail: session.user.email || '' }));
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -108,25 +113,35 @@ const App: React.FC = () => {
     navigate('/');
   };
 
-  // --- Route Parsing & View Selection ---
+  // --- View Selection ---
   
   // Parse path: /root/sub1/sub2
   const pathParts = currentPath.split('/').filter(Boolean);
   const rootPath = pathParts[0] || 'landing';
 
-  // Common Props
+  // Specific check for /memory-reliv-X pattern
+  const isWizardStep = currentPath.startsWith('/memory-reliv-');
+  const wizardStepNumber = isWizardStep ? parseInt(currentPath.split('-')[1] || '1', 10) : 1;
+  
+  // Check for the specific success path: /memory-reliv/success
+  const isWizardSuccess = currentPath === '/memory-reliv/success';
+
+  // Redirect base /memory-reliv to step 1
+  if (currentPath === '/memory-reliv') {
+     window.history.replaceState(null, '', '/memory-reliv-1');
+     setCurrentPath('/memory-reliv-1');
+  }
+
   const handleNavigation = (sectionId: string) => {
     if (rootPath !== 'landing') {
-      // If not on home, go to home then scroll
       navigate(`/#${sectionId}`);
     } else {
-      // Just scroll
       navigate(`#${sectionId}`);
     }
   };
 
   const navbarProps = {
-    onGetStarted: () => navigate('/signup'),
+    onGetStarted: () => navigate('/memory-reliv-1'),
     onPricingClick: () => navigate('/pricing'),
     onLoginClick: () => navigate('/login'),
     onNavigate: (id: string) => {
@@ -142,23 +157,21 @@ const App: React.FC = () => {
     onPrivacyClick: () => navigate('/privacy')
   };
 
-  // --- Rendering ---
-
   if (loadingSession) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
            <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
-           <p className="text-slate-500 text-sm font-medium">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Dashboard Route
+  // --- Routes ---
+
+  // Dashboard
   if (rootPath === 'dashboard') {
     if (!session) {
-        // Fallback protection if useEffect hasn't redirected yet
         return (
           <div className="min-h-screen bg-slate-50 flex items-center justify-center">
              <div className="text-center">
@@ -169,9 +182,8 @@ const App: React.FC = () => {
         );
     }
 
-    // Determine tabs from URL: /dashboard/memories or /dashboard/account/billing
     const activeTab = ['memories', 'drafts', 'account'].includes(pathParts[1]) ? pathParts[1] : 'memories';
-    const activeSection = pathParts[2]; // e.g. 'billing'
+    const activeSection = pathParts[2];
 
     return (
       <Dashboard 
@@ -182,38 +194,54 @@ const App: React.FC = () => {
           navigate(url);
         }}
         onLogout={handleLogout} 
-        onNewMemory={() => navigate('/wizard')}
+        onNewMemory={() => navigate('/memory-reliv-1')}
         onHome={() => navigate('/')}
       />
     );
   }
 
-  // Legal Pages
-  if (rootPath === 'terms') {
-    return <LegalPage type="terms" onBack={() => navigate('/')} />;
-  }
-  if (rootPath === 'privacy') {
-    return <LegalPage type="privacy" onBack={() => navigate('/')} />;
-  }
+  // Legal
+  if (rootPath === 'terms') return <LegalPage type="terms" onBack={() => navigate('/')} />;
+  if (rootPath === 'privacy') return <LegalPage type="privacy" onBack={() => navigate('/')} />;
 
-  // Wizard
-  if (rootPath === 'wizard') {
+  // Intake Wizard Steps
+  if (isWizardStep) {
     return (
       <IntakeWizard 
-        onReturnHome={() => navigate('/')} 
-        onGoToPayment={(data) => {
-          setCompletedWizardData(data);
-          navigate('/pricing');
+        currentStep={wizardStepNumber}
+        formData={wizardData}
+        onDataChange={setWizardData}
+        onNavigateStep={(step) => {
+          if (step > 14) {
+            navigate('/pricing');
+          } else {
+            navigate(`/memory-reliv-${step}`);
+          }
         }}
+        onReturnHome={() => navigate('/')} 
         logoSrc="https://www.dropbox.com/scl/fi/yruygvw5vv4p8c1ppk2os/Solim-brain-logo-1.png?rlkey=wfs4c7hjrhisjetsf0nq8gnig&st=uppd1ooo&raw=1"
-        initialEmail={userEmail}
       />
     );
   }
 
+  // Success Page
+  if (isWizardSuccess) {
+     return (
+      <>
+        <PaymentPage 
+          onReturnHome={() => navigate('/')} 
+          hasWizardData={true}
+          wizardData={wizardData}
+          onStartWizard={() => navigate('/memory-reliv-1')}
+          showSuccessView={true}
+        />
+      </>
+     );
+  }
+
   // Auth
-  if (rootPath === 'login') return <LoginPage />;
-  if (rootPath === 'signup' || rootPath === 'register') return <SignUpPage />;
+  if (rootPath === 'login') return <LoginPage onNavigate={navigate} />;
+  if (rootPath === 'signup' || rootPath === 'register') return <SignUpPage onNavigate={navigate} />;
 
   // Payment / Pricing
   if (rootPath === 'pricing' || rootPath === 'payment' || rootPath === 'checkout') {
@@ -222,23 +250,25 @@ const App: React.FC = () => {
         <Navbar {...navbarProps} />
         <PaymentPage 
           onReturnHome={() => navigate('/')} 
-          hasWizardData={!!completedWizardData}
-          wizardData={completedWizardData}
-          onStartWizard={() => navigate('/wizard')}
+          hasWizardData={true}
+          wizardData={wizardData}
+          onStartWizard={() => navigate('/memory-reliv-1')}
         />
         <Footer {...footerProps} />
       </>
     );
   }
 
-  // Landing Page (Default)
+  // Landing
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900 bg-white">
       <Navbar {...navbarProps} />
       <main className="flex-grow">
         <Hero onGetStarted={(email) => { 
-          setUserEmail(email); 
-          navigate('/signup'); 
+          // Pre-fill email then go to wizard step 1
+          setUserEmail(email);
+          setWizardData(prev => ({...prev, userEmail: email}));
+          navigate('/memory-reliv-1'); 
         }} />
         <HowItWorks />
         <Testimonials />
